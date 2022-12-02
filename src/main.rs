@@ -1,10 +1,10 @@
 #![deny(warnings)]
 
-use std::{fmt, fs};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::process::exit;
+use std::process::Command;
+use std::{fmt, fs};
 
 use clap::{crate_authors, crate_description, crate_version, Parser};
 use eyre::eyre;
@@ -35,7 +35,7 @@ fn find_toml(path: &Path) -> Option<PathBuf> {
     }
     match path.parent() {
         Some(path) => find_toml(path),
-        None => None
+        None => None,
     }
 }
 
@@ -76,10 +76,12 @@ fn run() -> eyre::Result<()> {
     if !path.is_file() {
         return Err(eyre!("Unable to open input file: {}", path.display()));
     }
-    let toml = find_toml(path.parent().unwrap()).expect(format!("Unable to find a pyproject.toml for {}", path.display()).as_str());
+    let toml = find_toml(path.parent().unwrap())
+        .expect(format!("Unable to find a pyproject.toml for {}", path.display()).as_str());
     let project_root = toml.parent().unwrap();
     let toml_doc = fs::read_to_string(toml.as_path())?;
-    let config: Config = toml::from_str(&toml_doc).expect("Unable to read toml document or find the py.tool configuration in it");
+    let config: Config = toml::from_str(&toml_doc)
+        .expect("Unable to read toml document or find the py.tool configuration in it");
     let py_config = config.tool.py;
     let python = project_root.join(Path::new(&py_config.python_interpreter));
     let src_root = project_root.join(Path::new(&py_config.source_root));
