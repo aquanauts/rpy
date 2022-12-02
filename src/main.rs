@@ -1,10 +1,10 @@
 #![deny(warnings)]
 
+use std::{fs};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::exit;
 use std::process::Command;
-use std::{fmt, fs};
+use std::process::exit;
 
 use clap::{crate_authors, crate_description, crate_version, Parser};
 use eyre::eyre;
@@ -46,7 +46,7 @@ struct Config {
 
 #[derive(Deserialize, Debug)]
 struct Tool {
-    py: PyConfig,
+    rpy: PyConfig,
 }
 
 #[derive(Deserialize, Debug)]
@@ -54,20 +54,6 @@ struct PyConfig {
     python_interpreter: String,
     source_root: String,
     pre_run: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-struct PyError;
-
-// Generation of an error is completely separate from how it is displayed.
-// There's no need to be concerned about cluttering complex logic with the display style.
-//
-// Note that we don't store any extra info about the errors. This means we can't state
-// which string failed to parse without modifying our types to carry that information.
-impl fmt::Display for PyError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid first item to double")
-    }
 }
 
 fn run() -> eyre::Result<()> {
@@ -81,8 +67,8 @@ fn run() -> eyre::Result<()> {
     let project_root = toml.parent().unwrap();
     let toml_doc = fs::read_to_string(toml.as_path())?;
     let config: Config = toml::from_str(&toml_doc)
-        .expect("Unable to read toml document or find the py.tool configuration in it");
-    let py_config = config.tool.py;
+        .expect("Unable to read toml document or find the rpy.tool configuration in it");
+    let py_config = config.tool.rpy;
     let python = project_root.join(Path::new(&py_config.python_interpreter));
     let src_root = project_root.join(Path::new(&py_config.source_root));
     if args.verbose {
@@ -94,11 +80,13 @@ fn run() -> eyre::Result<()> {
             if args.verbose {
                 println!("running pre_run: {}", str);
             }
-            let args = ["-c", &str];
-            Command::new("bash")
+            let args = ["-eu", "-o", "pipefail", "-c", &str];
+            let res = Command::new("false")
                 .args(args)
                 .current_dir(project_root)
-                .exec();
+                .status();
+                // .expect(&format!("pre_run command '{}' failed", str));
+            println!("{:?}", res);
         }
         None => {}
     }
@@ -116,7 +104,7 @@ fn run() -> eyre::Result<()> {
 
 fn main() {
     if let Err(e) = run() {
-        eprintln!("[py] Error: {e}");
+        eprintln!("[rpy] Error: {e}");
         exit(1);
     }
 }

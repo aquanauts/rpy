@@ -373,18 +373,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "py"
-version = "0.1.0"
-dependencies = [
- "assert_cmd",
- "clap",
- "color-eyre",
- "eyre",
- "serde",
- "toml",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -398,6 +386,18 @@ name = "regex-automata"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c230d73fb8d8c1b9c0b3135c5142a8acee3a0558fb8db5cf1cb65f8d7862132"
+
+[[package]]
+name = "rpy"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "clap",
+ "color-eyre",
+ "eyre",
+ "serde",
+ "toml",
+]
 
 [[package]]
 name = "rustc-demangle"
