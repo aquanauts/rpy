@@ -1,0 +1,18 @@
+[package]
+name = "py"
+version = "0.1.0"
+edition = "2018"
+description = "Run the appropriate python interpreter in the right way"
+authors = ["Matt Godbolt <matt.godbolt@aquatic.com>"]
+readme = "README.md"
+keywords = ["python", "launcher"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+clap = { version = "4.0.29", features = ["cargo", "derive"] }
+eyre = "0.6.6"
+color-eyre = "0.6.0"
+toml = "0.5.9"
+serde = { version = "1.0", features = ["derive"] }
+[dev-dependencies]
+assert_cmd = "2.0.4"
