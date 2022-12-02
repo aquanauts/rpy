@@ -73,13 +73,17 @@ fn pre_run(run_dir: &Path, pre_run_cmd: &str, verbose: bool) -> Result<()> {
 
 fn run() -> Result<()> {
     let cmdline_args = Opts::parse();
-    let script_path = Path::new(&cmdline_args.script);
+    let script_path = fs::canonicalize(Path::new(&cmdline_args.script)).wrap_err("unable to resolve project root")?;
     if !script_path.is_file() {
         return Err(eyre!("Unable to open input file: {}", script_path.display()));
     }
     let toml = find_toml(script_path.parent().wrap_err("Unable to get script parent dir")?)
         .wrap_err_with(|| format!("Unable to find a pyproject.toml for {}", script_path.display()))?;
     let project_root = toml.parent().wrap_err("Unable to get project root")?;
+    if cmdline_args.verbose {
+        println!("project root: {}", project_root.display());
+        println!("toml: {}", toml.display());
+    }
     let toml_doc = fs::read_to_string(toml.as_path()).wrap_err("Unable to read pyproject.toml")?;
     let config: Config = toml::from_str(&toml_doc)
         .wrap_err("Unable to read toml document or find the rpy.tool configuration in it")?;
@@ -91,7 +95,7 @@ fn run() -> Result<()> {
         println!("src_root: {}", src_root.display());
     }
     match py_config.pre_run {
-        Some(str) => { pre_run(project_root, &str, cmdline_args.verbose)?; }
+        Some(str) => { pre_run(project_root, &str, cmdline_args.verbose).wrap_err("Unable to run pre_run step")?; }
         None => {}
     }
 
@@ -103,7 +107,7 @@ fn run() -> Result<()> {
     Err(Report::new(Command::new(python)
         .args(&zomg)
         .env("PYTHONPATH", &src_root)
-        .exec()))
+        .exec())).wrap_err("Unable to launch process")
 }
 
 fn main() {
