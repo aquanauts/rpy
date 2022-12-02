@@ -1,13 +1,13 @@
 #![deny(warnings)]
 
-use std::{fs};
+use std::fs;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::exit;
 
 use clap::{crate_authors, crate_description, crate_version, Parser};
-use eyre::eyre;
+use eyre::{ContextCompat, eyre, Report, Result};
 use serde::Deserialize;
 
 #[derive(Parser, Debug)]
@@ -51,25 +51,25 @@ struct Tool {
 
 #[derive(Deserialize, Debug)]
 struct PyConfig {
-    python_interpreter: String,
+    interpreter: String,
     source_root: String,
     pre_run: Option<String>,
 }
 
-fn run() -> eyre::Result<()> {
+fn run() -> Result<()> {
     let args = Opts::parse();
     let path = Path::new(&args.script);
     if !path.is_file() {
         return Err(eyre!("Unable to open input file: {}", path.display()));
     }
-    let toml = find_toml(path.parent().unwrap())
+    let toml = find_toml(path.parent().wrap_err("Unable to get parent dir")?)
         .expect(format!("Unable to find a pyproject.toml for {}", path.display()).as_str());
     let project_root = toml.parent().unwrap();
     let toml_doc = fs::read_to_string(toml.as_path())?;
     let config: Config = toml::from_str(&toml_doc)
         .expect("Unable to read toml document or find the rpy.tool configuration in it");
     let py_config = config.tool.rpy;
-    let python = project_root.join(Path::new(&py_config.python_interpreter));
+    let python = project_root.join(Path::new(&py_config.interpreter));
     let src_root = project_root.join(Path::new(&py_config.source_root));
     if args.verbose {
         println!("python: {}", python.display());
@@ -81,25 +81,26 @@ fn run() -> eyre::Result<()> {
                 println!("running pre_run: {}", str);
             }
             let args = ["-eu", "-o", "pipefail", "-c", &str];
-            let res = Command::new("false")
+            let res = Command::new("bash")
                 .args(args)
                 .current_dir(project_root)
-                .status();
-                // .expect(&format!("pre_run command '{}' failed", str));
-            println!("{:?}", res);
+                .status()?;
+            if !res.success() {
+                return Err(eyre!("Pre-run step '{}' failed with exit code {}", str, res.code().unwrap()));
+            }
         }
         None => {}
     }
+
+    // would be nice if I could work out how to prepend in-place which I know must be possible, like
+    // a ranges thing I can pass to args. I nearly got it working with slices but I suck.
+    // .args(&[&path[..], &args.args[..]].concat()) something like that?
     let mut zomg = args.args.clone();
     zomg.insert(0, String::from(path.to_str().unwrap()));
-    // args.
-    // let path : Vec<String> = Vec::from(&[&path.to_str().unwrap()]);
-    Command::new(python)
-        // .args(&[&path[..], &args.args[..]].concat())
+    Err(Report::new(Command::new(python)
         .args(&zomg)
         .env("PYTHONPATH", &src_root)
-        .exec();
-    Ok(())
+        .exec()))
 }
 
 fn main() {

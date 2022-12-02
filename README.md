@@ -20,7 +20,7 @@ After:
 
 ```toml
 [tool.rpy]
-python_interpreter = 'out/env/bin/python'  # path relative to the project root for the python interpreter to use
+interpreter = 'out/env/bin/python'  # path relative to the project root for the python interpreter to use
 source_root = 'src/py'                     # PYTHONPATH to set up
 pre_run = 'make -q deps'                   # Optional command to run in the project root first
 ```
