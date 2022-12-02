@@ -3,11 +3,11 @@
 use std::fs;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::process::exit;
+use std::process::Command;
 
 use clap::{crate_authors, crate_description, crate_version, Parser};
-use eyre::{ContextCompat, eyre, Report, Result, WrapErr};
+use eyre::{eyre, ContextCompat, Report, Result, WrapErr};
 use serde::Deserialize;
 
 #[derive(Parser, Debug)]
@@ -66,19 +66,36 @@ fn pre_run(run_dir: &Path, pre_run_cmd: &str, verbose: bool) -> Result<()> {
         .current_dir(run_dir)
         .status()?;
     if !res.success() {
-        return Err(eyre!("Pre-run step '{}' failed with exit code {}", pre_run_cmd, res.code().unwrap()));
+        return Err(eyre!(
+            "Pre-run step '{}' failed with exit code {}",
+            pre_run_cmd,
+            res.code().unwrap()
+        ));
     }
     Ok(())
 }
 
 fn run() -> Result<()> {
     let cmdline_args = Opts::parse();
-    let script_path = fs::canonicalize(Path::new(&cmdline_args.script)).wrap_err("unable to resolve project root")?;
+    let script_path = fs::canonicalize(Path::new(&cmdline_args.script))
+        .wrap_err("unable to resolve project root")?;
     if !script_path.is_file() {
-        return Err(eyre!("Unable to open input file: {}", script_path.display()));
+        return Err(eyre!(
+            "Unable to open input file: {}",
+            script_path.display()
+        ));
     }
-    let toml = find_toml(script_path.parent().wrap_err("Unable to get script parent dir")?)
-        .wrap_err_with(|| format!("Unable to find a pyproject.toml for {}", script_path.display()))?;
+    let toml = find_toml(
+        script_path
+            .parent()
+            .wrap_err("Unable to get script parent dir")?,
+    )
+    .wrap_err_with(|| {
+        format!(
+            "Unable to find a pyproject.toml for {}",
+            script_path.display()
+        )
+    })?;
     let project_root = toml.parent().wrap_err("Unable to get project root")?;
     if cmdline_args.verbose {
         println!("project root: {}", project_root.display());
@@ -95,7 +112,10 @@ fn run() -> Result<()> {
         println!("src_root: {}", src_root.display());
     }
     match py_config.pre_run {
-        Some(str) => { pre_run(project_root, &str, cmdline_args.verbose).wrap_err("Unable to run pre_run step")?; }
+        Some(str) => {
+            pre_run(project_root, &str, cmdline_args.verbose)
+                .wrap_err("Unable to run pre_run step")?;
+        }
         None => {}
     }
 
@@ -104,10 +124,14 @@ fn run() -> Result<()> {
     // .args(&[&path[..], &args.args[..]].concat()) something like that?
     let mut zomg = cmdline_args.args.clone();
     zomg.insert(0, String::from(script_path.to_str().unwrap()));
-    Err(Report::new(Command::new(python)
-        .args(&zomg)
-        .env("PYTHONPATH", &src_root)
-        .exec())).wrap_err("Unable to launch process")
+    Err(Report::new(
+        Command::new(python)
+            .args(&zomg)
+            .env("PYTHONPATH", &src_root)
+            .env("PYTHONNOUSERSITE", "1")
+            .exec(),
+    ))
+    .wrap_err("Unable to launch process")
 }
 
 fn main() {
