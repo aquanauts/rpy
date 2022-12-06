@@ -22,6 +22,6 @@ After:
 [tool.rpy]
 # All paths are relative to the project root (which is wherever we found the pyproject.toml
 interpreter = 'out/env/bin/python'  # path relative to the project root
-source_root = 'src/py'              # PYTHONPATH to set up
+source_root = 'src/py'              # Optioanl PYTHONPATH to set up (defaults to project root)
 pre_run = 'make -q deps'            # Optional command to run in the project root first
 ```
