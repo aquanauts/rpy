@@ -9,7 +9,6 @@ keywords = ["python", "launcher"]
 categories = ["command-line-utilities"]
 
 [dependencies]
-clap = { version = "4.0.29", features = ["cargo", "derive"] }
 eyre = "0.6.6"
 color-eyre = "0.6.0"
 toml = "0.5.9"
