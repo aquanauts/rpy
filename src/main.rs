@@ -9,9 +9,9 @@ use std::{env, fs};
 use eyre::{eyre, ContextCompat, Report, Result, WrapErr};
 use serde::Deserialize;
 
-use crate::args::Opts;
+use crate::rpy::Rpy;
 
-mod args;
+mod rpy;
 
 #[derive(Deserialize, Debug)]
 struct Config {
@@ -50,7 +50,11 @@ fn pre_run(run_dir: &Path, pre_run_cmd: &str, verbose: bool) -> Result<()> {
 }
 
 fn run() -> Result<()> {
-    let cmdline_args = Opts::parse(env::args().skip(1).collect());
+    let cmdline_args = Rpy::parse(env::args().skip(1).collect());
+    if cmdline_args.print_banner {
+        println!("Running under rpy version {}", env!("CARGO_PKG_VERSION"));
+    }
+
     let verbose = env::var("RPY_VERBOSE").unwrap_or("0".to_string()) != "0";
     let toml = cmdline_args.find_toml()?;
     let project_root = toml.parent().wrap_err("Unable to get project root")?;

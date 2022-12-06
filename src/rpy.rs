@@ -1,9 +1,9 @@
 #![deny(warnings)]
 
-use std::path::{Path, PathBuf};
 use std::{env, fs};
+use std::path::{Path, PathBuf};
 
-use eyre::{eyre, ContextCompat, Result, WrapErr};
+use eyre::{ContextCompat, eyre, Result, WrapErr};
 
 #[derive(Debug, PartialEq)]
 pub enum InvocationType {
@@ -14,11 +14,11 @@ pub enum InvocationType {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Opts {
+pub struct Rpy {
     python_args: Vec<String>,
     command_args: Vec<String>,
     invocation_type: InvocationType,
-    // print_banner: bool TODO
+    pub(crate) print_banner: bool
 }
 
 enum PythonArg {
@@ -30,11 +30,12 @@ enum PythonArg {
     Error,
 }
 
-impl Opts {
-    pub fn parse(options_orig: Vec<String>) -> Opts {
+impl Rpy {
+    pub fn parse(options_orig: Vec<String>) -> Rpy {
         let mut options = options_orig.clone();
         let mut python_args: Vec<String> = vec![];
         let mut invocation_type: Option<InvocationType> = None;
+        let mut print_banner = false;
         while invocation_type.is_none() && !options.is_empty() {
             let (arg, num_consumed) = Self::parse_args(options.first().unwrap(), options.get(1));
             python_args.extend(options.drain(0..num_consumed));
@@ -42,15 +43,20 @@ impl Opts {
                 PythonArg::Module(module) => invocation_type = Some(InvocationType::Module(module)),
                 PythonArg::Command(cmd) => invocation_type = Some(InvocationType::Command(cmd)),
                 PythonArg::File(file) => invocation_type = Some(InvocationType::File(file)),
-                PythonArg::SingleChars(_) => {}
-                PythonArg::LongArg(_) => {}
+                PythonArg::SingleChars(arg) => {
+                    if arg.contains("h") { print_banner = true; }
+                }
+                PythonArg::LongArg(arg) => {
+                    if arg == "--help" { print_banner = true; }
+                }
                 PythonArg::Error => invocation_type = Some(InvocationType::Interactive),
             }
         }
-        Opts {
+        Rpy {
             python_args,
             command_args: options,
             invocation_type: invocation_type.unwrap_or(InvocationType::Interactive),
+            print_banner
         }
     }
 
@@ -137,13 +143,13 @@ impl Opts {
 
 #[cfg(test)]
 mod tests {
-    use super::{InvocationType, Opts};
+    use super::{InvocationType, Rpy};
 
     #[test]
     fn should_parse_no_args() {
         assert_eq!(
-            Opts::parse(vec![]),
-            Opts {
+            Rpy::parse(vec![]),
+            Rpy {
                 python_args: vec![],
                 command_args: vec![],
                 invocation_type: InvocationType::Interactive,
@@ -154,16 +160,16 @@ mod tests {
     #[test]
     fn should_parse_simple_filename() {
         assert_eq!(
-            Opts::parse(vec!["some_file.py".into()]),
-            Opts {
+            Rpy::parse(vec!["some_file.py".into()]),
+            Rpy {
                 python_args: vec!["some_file.py".into()],
                 command_args: vec![],
                 invocation_type: InvocationType::File("some_file.py".into()),
             }
         );
         assert_eq!(
-            Opts::parse(vec!["some_file.py".into(), "arg".into()]),
-            Opts {
+            Rpy::parse(vec!["some_file.py".into(), "arg".into()]),
+            Rpy {
                 python_args: vec!["some_file.py".into()],
                 command_args: vec!["arg".into()],
                 invocation_type: InvocationType::File("some_file.py".into()),
@@ -174,15 +180,15 @@ mod tests {
     #[test]
     fn should_parse_filename_with_args_and_opts() {
         assert_eq!(
-            Opts::parse(vec![
+            Rpy::parse(vec![
                 "-i".into(),
                 "-d".into(),
                 "-s".into(),
                 "some_file.py".into(),
                 "arg1".into(),
-                "arg2".into()
+                "arg2".into(),
             ]),
-            Opts {
+            Rpy {
                 python_args: vec!["-i".into(), "-d".into(), "-s".into(), "some_file.py".into()],
                 command_args: vec!["arg1".into(), "arg2".into()],
                 invocation_type: InvocationType::File("some_file.py".into()),
@@ -195,8 +201,8 @@ mod tests {
         // Should pass this combo on to python unmolested as an "interactive" at least so python
         // can give its error message.
         assert_eq!(
-            Opts::parse(vec!["--".into(), "moo".into(), "foo".into()]),
-            Opts {
+            Rpy::parse(vec!["--".into(), "moo".into(), "foo".into()]),
+            Rpy {
                 python_args: vec!["--".into()],
                 command_args: vec!["moo".into(), "foo".into()],
                 invocation_type: InvocationType::Interactive,
@@ -207,16 +213,16 @@ mod tests {
     #[test]
     fn should_parse_simple_module() {
         assert_eq!(
-            Opts::parse(vec!["-m".into(), "some.module".into()]),
-            Opts {
+            Rpy::parse(vec!["-m".into(), "some.module".into()]),
+            Rpy {
                 python_args: vec!["-m".into(), "some.module".into()],
                 command_args: vec![],
                 invocation_type: InvocationType::Module("some.module".into()),
             }
         );
         assert_eq!(
-            Opts::parse(vec!["-msome.module".into()]),
-            Opts {
+            Rpy::parse(vec!["-msome.module".into()]),
+            Rpy {
                 python_args: vec!["-msome.module".into()],
                 command_args: vec![],
                 invocation_type: InvocationType::Module("some.module".into()),
@@ -227,20 +233,20 @@ mod tests {
     #[test]
     fn should_parse_module_with_args_and_opts() {
         assert_eq!(
-            Opts::parse(vec![
+            Rpy::parse(vec![
                 "-i".into(),
                 "-d".into(),
                 "-s".into(),
                 "-msome.module".into(),
                 "arg1".into(),
-                "arg2".into()
+                "arg2".into(),
             ]),
-            Opts {
+            Rpy {
                 python_args: vec![
                     "-i".into(),
                     "-d".into(),
                     "-s".into(),
-                    "-msome.module".into()
+                    "-msome.module".into(),
                 ],
                 command_args: vec!["arg1".into(), "arg2".into()],
                 invocation_type: InvocationType::Module("some.module".into()),
@@ -252,16 +258,16 @@ mod tests {
     fn should_parse_simple_command() {
         let cmd = "print(\"hello world\")";
         assert_eq!(
-            Opts::parse(vec!["-c".into(), cmd.into()]),
-            Opts {
+            Rpy::parse(vec!["-c".into(), cmd.into()]),
+            Rpy {
                 python_args: vec!["-c".into(), cmd.into()],
                 command_args: vec![],
                 invocation_type: InvocationType::Command(cmd.into()),
             }
         );
         assert_eq!(
-            Opts::parse(vec!["-c".to_string() + &cmd]),
-            Opts {
+            Rpy::parse(vec!["-c".to_string() + &cmd]),
+            Rpy {
                 python_args: vec!["-c".to_string() + &cmd],
                 command_args: vec![],
                 invocation_type: InvocationType::Command(cmd.into()),
@@ -273,22 +279,22 @@ mod tests {
     fn should_parse_commande_with_args_and_opts() {
         let cmd = "print(\"hello world\")";
         assert_eq!(
-            Opts::parse(vec![
+            Rpy::parse(vec![
                 "-i".into(),
                 "-d".into(),
                 "-s".into(),
                 "-c".to_string(),
                 cmd.into(),
                 "arg1".into(),
-                "arg2".into()
+                "arg2".into(),
             ]),
-            Opts {
+            Rpy {
                 python_args: vec![
                     "-i".into(),
                     "-d".into(),
                     "-s".into(),
                     "-c".to_string(),
-                    cmd.into()
+                    cmd.into(),
                 ],
                 command_args: vec!["arg1".into(), "arg2".into()],
                 invocation_type: InvocationType::Command(cmd.into()),
