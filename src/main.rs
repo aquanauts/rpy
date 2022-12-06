@@ -67,7 +67,9 @@ fn run() -> Result<()> {
         .wrap_err("Unable to read toml document or find the rpy.tool configuration in it")?;
     let py_config = config.tool.rpy;
     let python = project_root.join(Path::new(&py_config.interpreter));
-    let src_root = project_root.join(Path::new(&py_config.source_root.unwrap_or(".".to_string())));
+    let src_root = project_root.join(Path::new(
+        &py_config.source_root.unwrap_or_else(|| ".".to_string()),
+    ));
     if verbose {
         println!("python: {}", python.display());
         println!("src_root: {}", src_root.display());
