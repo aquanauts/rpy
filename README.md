@@ -5,13 +5,13 @@ Do you deal with lots of virtual conda environments? `rpy` is for you!
 Before `rpy`:
 
 ```
-~/dev/some/project$ env PYTHONPATH=src/py path/to/my/interpreter path/to/my/script.py --my --args here
+~/dev/prj$ env PYTHONPATH=src/py path/to/my/interpreter src/py/my/script.py --my --args here
 ```
 
 After:
 
 ```
-~/dev/some/project$ rpy path/to/my/script.py  --my --args here
+~/dev/prj$ rpy src/py/my/script.py  --my --args here
 ```
 
 ### The magic
