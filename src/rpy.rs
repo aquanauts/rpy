@@ -1,9 +1,9 @@
 #![deny(warnings)]
 
-use std::{env, fs};
 use std::path::{Path, PathBuf};
+use std::{env, fs};
 
-use eyre::{ContextCompat, eyre, Result, WrapErr};
+use eyre::{eyre, ContextCompat, Result, WrapErr};
 
 #[derive(Debug, PartialEq)]
 pub enum InvocationType {
@@ -18,7 +18,7 @@ pub struct Rpy {
     python_args: Vec<String>,
     command_args: Vec<String>,
     invocation_type: InvocationType,
-    pub(crate) print_banner: bool
+    pub(crate) print_banner: bool,
 }
 
 enum PythonArg {
@@ -44,10 +44,14 @@ impl Rpy {
                 PythonArg::Command(cmd) => invocation_type = Some(InvocationType::Command(cmd)),
                 PythonArg::File(file) => invocation_type = Some(InvocationType::File(file)),
                 PythonArg::SingleChars(arg) => {
-                    if arg.contains("h") { print_banner = true; }
+                    if arg.contains("h") {
+                        print_banner = true;
+                    }
                 }
                 PythonArg::LongArg(arg) => {
-                    if arg == "--help" { print_banner = true; }
+                    if arg == "--help" || arg == "--version" {
+                        print_banner = true;
+                    }
                 }
                 PythonArg::Error => invocation_type = Some(InvocationType::Interactive),
             }
@@ -56,7 +60,7 @@ impl Rpy {
             python_args,
             command_args: options,
             invocation_type: invocation_type.unwrap_or(InvocationType::Interactive),
-            print_banner
+            print_banner,
         }
     }
 
@@ -130,7 +134,10 @@ impl Rpy {
                     .to_path_buf()
             }
         };
-        Self::find_toml_for_path(&path).wrap_err(format!("Unable to find pyproject.toml from {}", path.display()))
+        Self::find_toml_for_path(&path).wrap_err(format!(
+            "Unable to find pyproject.toml from {}",
+            path.display()
+        ))
     }
 
     pub fn make_args(&self) -> Vec<&String> {
@@ -153,6 +160,7 @@ mod tests {
                 python_args: vec![],
                 command_args: vec![],
                 invocation_type: InvocationType::Interactive,
+                print_banner: false,
             }
         );
     }
@@ -165,6 +173,7 @@ mod tests {
                 python_args: vec!["some_file.py".into()],
                 command_args: vec![],
                 invocation_type: InvocationType::File("some_file.py".into()),
+                print_banner: false,
             }
         );
         assert_eq!(
@@ -173,6 +182,7 @@ mod tests {
                 python_args: vec!["some_file.py".into()],
                 command_args: vec!["arg".into()],
                 invocation_type: InvocationType::File("some_file.py".into()),
+                print_banner: false,
             }
         );
     }
@@ -192,6 +202,7 @@ mod tests {
                 python_args: vec!["-i".into(), "-d".into(), "-s".into(), "some_file.py".into()],
                 command_args: vec!["arg1".into(), "arg2".into()],
                 invocation_type: InvocationType::File("some_file.py".into()),
+                print_banner: false,
             }
         );
     }
@@ -206,6 +217,7 @@ mod tests {
                 python_args: vec!["--".into()],
                 command_args: vec!["moo".into(), "foo".into()],
                 invocation_type: InvocationType::Interactive,
+                print_banner: false,
             }
         );
     }
@@ -218,6 +230,7 @@ mod tests {
                 python_args: vec!["-m".into(), "some.module".into()],
                 command_args: vec![],
                 invocation_type: InvocationType::Module("some.module".into()),
+                print_banner: false,
             }
         );
         assert_eq!(
@@ -226,6 +239,7 @@ mod tests {
                 python_args: vec!["-msome.module".into()],
                 command_args: vec![],
                 invocation_type: InvocationType::Module("some.module".into()),
+                print_banner: false,
             }
         );
     }
@@ -250,6 +264,7 @@ mod tests {
                 ],
                 command_args: vec!["arg1".into(), "arg2".into()],
                 invocation_type: InvocationType::Module("some.module".into()),
+                print_banner: false,
             }
         );
     }
@@ -263,6 +278,7 @@ mod tests {
                 python_args: vec!["-c".into(), cmd.into()],
                 command_args: vec![],
                 invocation_type: InvocationType::Command(cmd.into()),
+                print_banner: false,
             }
         );
         assert_eq!(
@@ -271,6 +287,7 @@ mod tests {
                 python_args: vec!["-c".to_string() + &cmd],
                 command_args: vec![],
                 invocation_type: InvocationType::Command(cmd.into()),
+                print_banner: false,
             }
         );
     }
@@ -298,7 +315,20 @@ mod tests {
                 ],
                 command_args: vec!["arg1".into(), "arg2".into()],
                 invocation_type: InvocationType::Command(cmd.into()),
+                print_banner: false,
             }
         );
+    }
+
+    #[test]
+    fn should_parse_banner_producing() {
+        assert!(Rpy::parse(vec!["-h".into()]).print_banner);
+        assert!(Rpy::parse(vec!["--help".into()]).print_banner);
+        assert!(Rpy::parse(vec!["--version".into()]).print_banner);
+    }
+
+    #[test]
+    fn should_parse_not_parse_help_after_script() {
+        assert!(!Rpy::parse(vec!["script.py".into(), "--help".into()]).print_banner);
     }
 }
