@@ -71,6 +71,14 @@ impl Rpy {
         }
     }
 
+    fn short_arg_count(arg: &String) -> usize {
+        if arg.ends_with("W") || arg.ends_with("X") {
+            2
+        } else {
+            1
+        }
+    }
+
     fn parse_args(arg: &String, next_arg: Option<&String>) -> (PythonArg, usize) {
         if arg.chars().nth(0) != Some('-') || arg == "-" {
             return (PythonArg::File(arg.clone()), 1);
@@ -99,7 +107,10 @@ impl Rpy {
                 }
                 (PythonArg::Module(next_arg.unwrap().clone()), 2)
             }
-            _ => (PythonArg::SingleChars(arg.clone()), 1),
+            _ => (
+                PythonArg::SingleChars(arg.clone()),
+                Self::short_arg_count(arg),
+            ),
         }
     }
 
@@ -330,5 +341,45 @@ mod tests {
     #[test]
     fn should_parse_not_parse_help_after_script() {
         assert!(!Rpy::parse(vec!["script.py".into(), "--help".into()]).print_banner);
+    }
+
+    #[test]
+    fn should_handle_long_args() {
+        assert_eq!(
+            Rpy::parse(vec!["-X".into(), "moo".into(), "file.py".into()]),
+            Rpy {
+                python_args: vec!["-X".into(), "moo".into(), "file.py".into()],
+                command_args: vec![],
+                invocation_type: InvocationType::File("file.py".into()),
+                print_banner: false,
+            }
+        );
+        assert_eq!(
+            Rpy::parse(vec!["-Xmoo".into(), "file.py".into()]),
+            Rpy {
+                python_args: vec!["-Xmoo".into(), "file.py".into()],
+                command_args: vec![],
+                invocation_type: InvocationType::File("file.py".into()),
+                print_banner: false,
+            }
+        );
+        assert_eq!(
+            Rpy::parse(vec!["-iXmoo".into(), "file.py".into()]),
+            Rpy {
+                python_args: vec!["-iXmoo".into(), "file.py".into()],
+                command_args: vec![],
+                invocation_type: InvocationType::File("file.py".into()),
+                print_banner: false,
+            }
+        );
+        assert_eq!(
+            Rpy::parse(vec!["-iWmodule".into(), "file.py".into()]),
+            Rpy {
+                python_args: vec!["-iWmodule".into(), "file.py".into()],
+                command_args: vec![],
+                invocation_type: InvocationType::File("file.py".into()),
+                print_banner: false,
+            }
+        );
     }
 }
