@@ -55,7 +55,7 @@ fn run() -> Result<()> {
         println!("Running under rpy version {}", env!("CARGO_PKG_VERSION"));
     }
 
-    let verbose = env::var("RPY_VERBOSE").unwrap_or("0".to_string()) != "0";
+    let verbose = env::var("RPY_VERBOSE").map_or(false, |x| x != "0");
     let toml = cmdline_args.find_toml()?;
     let project_root = toml.parent().wrap_err("Unable to get project root")?;
     if verbose {

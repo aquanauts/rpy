@@ -64,14 +64,14 @@ impl Rpy {
         }
     }
 
-    fn long_arg_count(arg: &String) -> usize {
-        match arg.as_str() {
+    fn long_arg_count(arg: &str) -> usize {
+        match arg {
             "--check-hash-based-pycs" => 2,
             _ => 1,
         }
     }
 
-    fn short_arg_count(arg: &String) -> usize {
+    fn short_arg_count(arg: &str) -> usize {
         if arg.ends_with('W') || arg.ends_with('X') {
             2
         } else {
