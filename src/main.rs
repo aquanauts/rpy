@@ -60,7 +60,7 @@ fn pre_run(run_dir: &Path, pre_run_cmd: &str, verbose: bool) -> Result<()> {
     if verbose {
         println!("running pre_run: {}", pre_run_cmd);
     }
-    let args = ["-eu", "-o", "pipefail", "-c", &pre_run_cmd];
+    let args = ["-eu", "-o", "pipefail", "-c", pre_run_cmd];
     let res = Command::new("bash")
         .args(args)
         .current_dir(run_dir)
@@ -111,12 +111,9 @@ fn run() -> Result<()> {
         println!("python: {}", python.display());
         println!("src_root: {}", src_root.display());
     }
-    match py_config.pre_run {
-        Some(str) => {
+    if let Some(str) = py_config.pre_run {
             pre_run(project_root, &str, cmdline_args.verbose)
                 .wrap_err("Unable to run pre_run step")?;
-        }
-        None => {}
     }
 
     // would be nice if I could work out how to prepend in-place which I know must be possible, like
