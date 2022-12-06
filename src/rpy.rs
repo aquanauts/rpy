@@ -5,7 +5,7 @@ use std::{env, fs};
 
 use eyre::{eyre, ContextCompat, Result, WrapErr};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum InvocationType {
     Interactive,
     Module(String),
@@ -13,7 +13,7 @@ pub enum InvocationType {
     File(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Rpy {
     python_args: Vec<String>,
     command_args: Vec<String>,
@@ -32,7 +32,7 @@ enum PythonArg {
 
 impl Rpy {
     pub fn parse(options_orig: Vec<String>) -> Rpy {
-        let mut options = options_orig.clone();
+        let mut options = options_orig;
         let mut python_args: Vec<String> = vec![];
         let mut invocation_type: Option<InvocationType> = None;
         let mut print_banner = false;
@@ -44,7 +44,7 @@ impl Rpy {
                 PythonArg::Command(cmd) => invocation_type = Some(InvocationType::Command(cmd)),
                 PythonArg::File(file) => invocation_type = Some(InvocationType::File(file)),
                 PythonArg::SingleChars(arg) => {
-                    if arg.contains("h") {
+                    if arg.contains('h') {
                         print_banner = true;
                     }
                 }
@@ -72,7 +72,7 @@ impl Rpy {
     }
 
     fn short_arg_count(arg: &String) -> usize {
-        if arg.ends_with("W") || arg.ends_with("X") {
+        if arg.ends_with('W') || arg.ends_with('X') {
             2
         } else {
             1
@@ -80,7 +80,7 @@ impl Rpy {
     }
 
     fn parse_args(arg: &String, next_arg: Option<&String>) -> (PythonArg, usize) {
-        if arg.chars().nth(0) != Some('-') || arg == "-" {
+        if !arg.starts_with('-') || arg == "-" {
             return (PythonArg::File(arg.clone()), 1);
         }
         if arg == "--" {
@@ -293,9 +293,9 @@ mod tests {
             }
         );
         assert_eq!(
-            Rpy::parse(vec!["-c".to_string() + &cmd]),
+            Rpy::parse(vec!["-c".to_string() + cmd]),
             Rpy {
-                python_args: vec!["-c".to_string() + &cmd],
+                python_args: vec!["-c".to_string() + cmd],
                 command_args: vec![],
                 invocation_type: InvocationType::Command(cmd.into()),
                 print_banner: false,
