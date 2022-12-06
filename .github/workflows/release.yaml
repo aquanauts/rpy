@@ -21,7 +21,7 @@ jobs:
         run: cargo build --release --verbose --target=x86_64-unknown-linux-musl
       - name: Ensure version is correct
         run: |
-          (cargo run --release --target=x86_64-unknown-linux-musl -- --version || true) | grep "version $(echo ${{ github.ref_name }} | tr 'v' ' '})"
+          (cargo run --release --target=x86_64-unknown-linux-musl -- --version || true) | grep "version$(echo ${{ github.ref_name }} | tr 'v' ' '})"
       - uses: actions/upload-artifact@v2
         with:
           name: rpy
