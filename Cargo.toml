@@ -16,3 +16,8 @@ serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.4"
+
+[profile.release]
+# Tweaked to get smaller binaries
+opt-level = "s"
+lto = "fat"
