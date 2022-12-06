@@ -5,7 +5,9 @@ edition = "2018"
 description = "Run the appropriate python interpreter in the right way"
 authors = ["Matt Godbolt <matt.godbolt@aquatic.com>"]
 readme = "README.md"
+repository = "https://github.com/aquanauts/rpy"
 keywords = ["python", "launcher"]
+license-file = "LICENSE.md"
 categories = ["command-line-utilities"]
 
 [dependencies]
