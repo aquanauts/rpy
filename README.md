@@ -1,6 +1,6 @@
 ## rpy
 
-Do you deal with lots of virtual conda environments? `rpy` is for you!
+Do you deal with lots of virtual python environments? `rpy` is for you!
 
 Before `rpy`:
 
