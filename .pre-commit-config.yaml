@@ -1,0 +1,21 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+      - id: cargo-check
+  - repo: local
+    hooks:
+      - id: do-not-commit
+        name: don't allow "do not commit" in files
+        language: pygrep
+        files: ^(?!\.pre-commit-config.yaml).*$
+        entry: (?i)do not commit
