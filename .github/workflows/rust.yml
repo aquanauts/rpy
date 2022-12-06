@@ -26,11 +26,11 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --verbose --all-features {{ matrix.opts }}
+          args: --verbose --all-features ${{ matrix.version }}
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --verbose {{ matrix.opts }}
+          args: --verbose ${{ matrix.version }}
 
   pre-commit-checks:
     runs-on: ubuntu-latest
