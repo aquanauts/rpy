@@ -12,6 +12,11 @@ env:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        opts:
+          - --release
+          - ""
 
     steps:
       - uses: actions/checkout@v3
@@ -21,11 +26,11 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --verbose --all-features
+          args: --verbose --all-features {{ matrix.opts }}
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --verbose
+          args: --verbose {{ matrix.opts }}
 
   pre-commit-checks:
     runs-on: ubuntu-latest
