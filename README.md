@@ -23,5 +23,5 @@ After:
 # All paths are relative to the project root (which is wherever we found the pyproject.toml
 interpreter = 'out/env/bin/python'  # path relative to the project root
 source_root = 'src/py'              # Optional PYTHONPATH to set up (defaults to project root)
-pre_run = 'make --quiet deps'            # Optional command to run in the project root first
+pre_run = 'make --quiet deps'       # Optional command to run in the project root first
 ```
