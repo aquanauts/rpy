@@ -1,0 +1,2 @@
+[tool.rpy]
+interpreter = 'bin/interp'
