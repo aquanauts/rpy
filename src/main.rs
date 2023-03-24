@@ -32,7 +32,7 @@ struct PyConfig {
 
 fn pre_run(run_dir: &Path, pre_run_cmd: &str, verbose: bool) -> Result<()> {
     if verbose {
-        println!("running pre_run: {}", pre_run_cmd);
+        println!("running pre_run: {pre_run_cmd}");
     }
     let args = ["-eu", "-o", "pipefail", "-c", pre_run_cmd];
     let res = Command::new("bash")
