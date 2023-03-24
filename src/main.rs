@@ -69,14 +69,12 @@ fn run() -> Result<()> {
     let py_config = config.tool.rpy;
     let raw_interpreter = env::var("RPY_INTERPRETER").unwrap_or(py_config.interpreter);
 
-    let interpreter = if raw_interpreter.contains("/") {
+    let interpreter = if raw_interpreter.contains('/') {
         project_root.join(Path::new(&raw_interpreter))
     } else {
         Path::new(&raw_interpreter).to_path_buf()
     };
-    let src_root = project_root.join(Path::new(
-        &py_config.source_root.unwrap_or_else(|| "".to_string()),
-    ));
+    let src_root = project_root.join(Path::new(&py_config.source_root.unwrap_or_default()));
     if verbose {
         println!("python: {}", interpreter.display());
         println!("src_root: {}", src_root.display());
@@ -91,18 +89,15 @@ fn run() -> Result<()> {
     cmd.env("PYTHONNOUSERSITE", "1");
     cmd.env("PYTHONSAFEPATH", "1");
 
-    match py_config.bin_path {
-        Some(bin_path_str) => {
-            let cur_path = env::var("PATH").unwrap_or("".to_string());
-            let mut paths = env::split_paths(&cur_path).collect::<Vec<_>>();
-            let bin_path = project_root.join(bin_path_str);
-            if verbose {
-                println!("bin_path: {}", bin_path.display());
-            }
-            paths.insert(0, bin_path);
-            cmd.env("PATH", env::join_paths(paths).unwrap());
+    if let Some(bin_path_str) = py_config.bin_path {
+        let cur_path = env::var("PATH").unwrap_or("".to_string());
+        let mut paths = env::split_paths(&cur_path).collect::<Vec<_>>();
+        let bin_path = project_root.join(bin_path_str);
+        if verbose {
+            println!("bin_path: {}", bin_path.display());
         }
-        None => {}
+        paths.insert(0, bin_path);
+        cmd.env("PATH", env::join_paths(paths).unwrap());
     };
 
     Err(Report::new(cmd.exec()))

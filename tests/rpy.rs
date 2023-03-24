@@ -1,7 +1,7 @@
 use std::{env, path::Path, process::Command};
 
-const SRC_ROOT: &'static str = env!("CARGO_MANIFEST_DIR");
-const RPY_EXE: &'static str = env!("CARGO_BIN_EXE_rpy");
+const SRC_ROOT: &str = env!("CARGO_MANIFEST_DIR");
+const RPY_EXE: &str = env!("CARGO_BIN_EXE_rpy");
 
 #[test]
 fn should_fail_with_no_pyproject_toml() {
@@ -154,7 +154,10 @@ fn should_work_with_abs_rpy_interpreter_environment_override() {
         .env("RPY_INTERPRETER", "interp2")
         .env(
             "PATH",
-            Path::new(SRC_ROOT).join("test_data/rel_interp/bin").display().to_string()
+            Path::new(SRC_ROOT)
+                .join("test_data/rel_interp/bin")
+                .display()
+                .to_string()
                 + ":"
                 + &env::var("PATH").unwrap(),
         )
