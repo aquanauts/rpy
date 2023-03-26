@@ -26,6 +26,7 @@ struct Tool {
 #[derive(Deserialize, Debug)]
 struct PyConfig {
     interpreter: String,
+    bin_path: Option<String>,
     source_root: Option<String>,
     pre_run: Option<String>,
 }
@@ -66,26 +67,40 @@ fn run() -> Result<()> {
     let config: Config = toml::from_str(&toml_doc)
         .wrap_err("Unable to read toml document or find the rpy.tool configuration in it")?;
     let py_config = config.tool.rpy;
-    let python = project_root.join(Path::new(&py_config.interpreter));
-    let src_root = project_root.join(Path::new(
-        &py_config.source_root.unwrap_or_else(|| ".".to_string()),
-    ));
+    let raw_interpreter = env::var("RPY_INTERPRETER").unwrap_or(py_config.interpreter);
+
+    let interpreter = if raw_interpreter.contains('/') {
+        project_root.join(Path::new(&raw_interpreter))
+    } else {
+        Path::new(&raw_interpreter).to_path_buf()
+    };
+    let src_root = project_root.join(Path::new(&py_config.source_root.unwrap_or_default()));
     if verbose {
-        println!("python: {}", python.display());
+        println!("python: {}", interpreter.display());
         println!("src_root: {}", src_root.display());
     }
     if let Some(str) = py_config.pre_run {
         pre_run(project_root, &str, verbose).wrap_err("Unable to run pre_run step")?;
     }
 
-    Err(Report::new(
-        Command::new(python)
-            .args(cmdline_args.make_args())
-            .env("PYTHONPATH", &src_root)
-            .env("PYTHONNOUSERSITE", "1")
-            .exec(),
-    ))
-    .wrap_err("Unable to launch process")
+    let mut cmd = Command::new(interpreter);
+    cmd.args(cmdline_args.make_args());
+    cmd.env("PYTHONPATH", &src_root);
+    cmd.env("PYTHONNOUSERSITE", "1");
+    cmd.env("PYTHONSAFEPATH", "1");
+
+    if let Some(bin_path_str) = py_config.bin_path {
+        let cur_path = env::var("PATH").unwrap_or("".to_string());
+        let mut paths = env::split_paths(&cur_path).collect::<Vec<_>>();
+        let bin_path = project_root.join(bin_path_str);
+        if verbose {
+            println!("bin_path: {}", bin_path.display());
+        }
+        paths.insert(0, bin_path);
+        cmd.env("PATH", env::join_paths(paths).unwrap());
+    };
+
+    Err(Report::new(cmd.exec()))
 }
 
 fn main() {

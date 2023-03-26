@@ -1,0 +1,3 @@
+[tool.rpy]
+interpreter = 'bash'
+source_root = 'src'

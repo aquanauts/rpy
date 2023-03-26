@@ -1,0 +1,2 @@
+echo badger
+echo $PYTHONPATH

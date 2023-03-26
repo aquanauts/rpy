@@ -1,0 +1,3 @@
+[tool.rpy]
+interpreter = 'bash'
+bin_path = 'bin'
