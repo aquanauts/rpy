@@ -88,6 +88,7 @@ fn run() -> Result<()> {
     cmd.env("PYTHONPATH", &src_root);
     cmd.env("PYTHONNOUSERSITE", "1");
     cmd.env("PYTHONSAFEPATH", "1");
+    cmd.env_remove("RPY_INTERPRETER");
 
     if let Some(bin_path_str) = py_config.bin_path {
         let cur_path = env::var("PATH").unwrap_or("".to_string());
