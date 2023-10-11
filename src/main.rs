@@ -70,7 +70,7 @@ fn run() -> Result<()> {
     let raw_interpreter = env::var("RPY_INTERPRETER").unwrap_or(py_config.interpreter);
 
     let interpreter = if raw_interpreter.contains('/') {
-        project_root.join(Path::new(&raw_interpreter))
+        project_root.join(Path::new(&raw_interpreter)).canonicalize().wrap_err("Unable to canonicalize interpreter path")?
     } else {
         Path::new(&raw_interpreter).to_path_buf()
     };
@@ -93,7 +93,7 @@ fn run() -> Result<()> {
     if let Some(bin_path_str) = py_config.bin_path {
         let cur_path = env::var("PATH").unwrap_or("".to_string());
         let mut paths = env::split_paths(&cur_path).collect::<Vec<_>>();
-        let bin_path = project_root.join(bin_path_str);
+        let bin_path = project_root.join(bin_path_str).canonicalize().wrap_err("Unable to canonicalize bin path")?;
         if verbose {
             println!("bin_path: {}", bin_path.display());
         }
