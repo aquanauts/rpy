@@ -1,0 +1,4 @@
+[tool.rpy]
+interpreter = 'bin/interp'
+bin_path = 'binlink'
+pre_run = './prerun.sh'

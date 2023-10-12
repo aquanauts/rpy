@@ -68,6 +68,9 @@ fn run() -> Result<()> {
         .wrap_err("Unable to read toml document or find the rpy.tool configuration in it")?;
     let py_config = config.tool.rpy;
     let raw_interpreter = env::var("RPY_INTERPRETER").unwrap_or(py_config.interpreter);
+    if let Some(str) = py_config.pre_run {
+        pre_run(project_root, &str, verbose).wrap_err("Unable to run pre_run step")?;
+    }
 
     let interpreter = if raw_interpreter.contains('/') {
         project_root
@@ -81,9 +84,6 @@ fn run() -> Result<()> {
     if verbose {
         println!("python: {}", interpreter.display());
         println!("src_root: {}", src_root.display());
-    }
-    if let Some(str) = py_config.pre_run {
-        pre_run(project_root, &str, verbose).wrap_err("Unable to run pre_run step")?;
     }
 
     let mut cmd = Command::new(interpreter);

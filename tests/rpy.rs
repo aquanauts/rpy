@@ -204,3 +204,25 @@ fn should_work_using_simple_shebang() {
     assert_eq!(stderr, "");
     assert_eq!(output.status.code().unwrap(), 0);
 }
+
+#[test]
+fn should_canonicalize_paths_correctly() {
+    std::fs::remove_dir_all(Path::new("test_data/canonicalize/bin")).ok();
+    let output = Command::new(RPY_EXE)
+        .current_dir(Path::new(SRC_ROOT).join("test_data/canonicalize"))
+        .arg("badger.sh")
+        .output()
+        .unwrap();
+    let stdout = std::str::from_utf8(&output.stdout).unwrap();
+    let stderr = std::str::from_utf8(&output.stderr).unwrap();
+    assert_eq!(
+        stdout,
+        "prerun\nbadger\n".to_string()
+            + SRC_ROOT
+            + "/test_data/canonicalize/bin:"
+            + &env::var("PATH").unwrap()
+            + "\n"
+    );
+    assert_eq!(stderr, "");
+    assert_eq!(output.status.code().unwrap(), 0);
+}
