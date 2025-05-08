@@ -4,6 +4,7 @@ use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::exit;
 use std::process::Command;
+use std::process::Stdio;
 use std::{env, fs};
 
 use eyre::{eyre, ContextCompat, Report, Result, WrapErr};
@@ -37,6 +38,8 @@ fn pre_run(run_dir: &Path, pre_run_cmd: &str, verbose: bool) -> Result<()> {
     }
     let args = ["-eu", "-o", "pipefail", "-c", pre_run_cmd];
     let res = Command::new("bash")
+        .stderr(Stdio::inherit())
+        .stdout(os_pipe::dup_stderr()?)
         .args(args)
         .current_dir(run_dir)
         .status()?;
@@ -56,7 +59,7 @@ fn run() -> Result<()> {
         println!("Running under rpy version {}", env!("CARGO_PKG_VERSION"));
     }
 
-    let verbose = env::var("RPY_VERBOSE").map_or(false, |x| x != "0");
+    let verbose = env::var("RPY_VERBOSE").is_ok_and(|x| x != "0");
     let toml = cmdline_args.find_toml()?;
     let project_root = toml.parent().wrap_err("Unable to get project root")?;
     if verbose {

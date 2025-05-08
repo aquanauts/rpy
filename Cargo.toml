@@ -1,6 +1,6 @@
 [package]
 name = "rpy"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2018"
 description = "Run the appropriate python interpreter in the right way"
 authors = ["Matt Godbolt <matt.godbolt@aquatic.com>"]
@@ -15,6 +15,7 @@ eyre = "0.6.6"
 color-eyre = "0.6.0"
 toml = "0.5.9"
 serde = { version = "1.0", features = ["derive"] }
+os_pipe = "1.2.1"
 
 [dev-dependencies]
 assert_cmd = "2.0.4"

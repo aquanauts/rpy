@@ -62,11 +62,11 @@ fn should_work_with_pre_run_pyproject_toml() {
         .unwrap();
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
+    assert_eq!(stdout, "badger\n");
     assert_eq!(
-        stdout,
-        "prerun ".to_string() + SRC_ROOT + "/test_data/pre_run\nbadger\n"
+        stderr,
+        "prerun ".to_string() + SRC_ROOT + "/test_data/pre_run\n"
     );
-    assert_eq!(stderr, "");
     assert_eq!(output.status.code().unwrap(), 0);
 }
 
@@ -217,12 +217,12 @@ fn should_canonicalize_paths_correctly() {
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
     assert_eq!(
         stdout,
-        "prerun\nbadger\n".to_string()
+        "badger\n".to_string()
             + SRC_ROOT
             + "/test_data/canonicalize/bin:"
             + &env::var("PATH").unwrap()
             + "\n"
     );
-    assert_eq!(stderr, "");
+    assert_eq!(stderr, "prerun\n");
     assert_eq!(output.status.code().unwrap(), 0);
 }
