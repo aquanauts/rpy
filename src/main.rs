@@ -2,12 +2,12 @@
 
 use std::os::unix::process::CommandExt;
 use std::path::Path;
-use std::process::exit;
 use std::process::Command;
 use std::process::Stdio;
+use std::process::exit;
 use std::{env, fs};
 
-use eyre::{eyre, ContextCompat, Report, Result, WrapErr};
+use eyre::{ContextCompat, Report, Result, WrapErr, eyre};
 use serde::Deserialize;
 
 use crate::rpy::Rpy;
@@ -115,7 +115,7 @@ fn run() -> Result<()> {
 
 fn main() {
     if let Err(e) = run() {
-        eprintln!("[rpy] Error: {e}");
+        eprintln!("[rpy] Error: {e:?}");
         exit(1);
     }
 }

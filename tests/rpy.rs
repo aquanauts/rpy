@@ -9,9 +9,9 @@ fn should_fail_with_no_pyproject_toml() {
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
     assert_eq!(stdout, "");
-    assert_eq!(
-        stderr,
-        "[rpy] Error: Unable to find pyproject.toml from /\n"
+    assert!(
+        stderr.starts_with("[rpy] Error: Unable to find pyproject.toml from /\n"),
+        "{stderr}"
     );
     assert_eq!(output.status.code().unwrap(), 1);
 }
@@ -25,9 +25,11 @@ fn should_fail_with_empty_pyproject_toml() {
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
     assert_eq!(stdout, "");
-    assert_eq!(
-        stderr,
-        "[rpy] Error: Unable to read toml document or find the rpy.tool configuration in it\n"
+    assert!(
+        stderr.starts_with(
+            "[rpy] Error: Unable to read toml document or find the rpy.tool configuration in it\n"
+        ),
+        "{stderr}"
     );
     assert_eq!(output.status.code().unwrap(), 1);
 }

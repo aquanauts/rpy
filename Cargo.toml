@@ -1,7 +1,7 @@
 [package]
 name = "rpy"
 version = "0.2.4"
-edition = "2018"
+edition = "2024"
 description = "Run the appropriate python interpreter in the right way"
 authors = ["Matt Godbolt <matt.godbolt@aquatic.com>"]
 readme = "README.md"
