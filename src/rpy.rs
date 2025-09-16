@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
-use eyre::{eyre, ContextCompat, Result, WrapErr};
+use eyre::{ContextCompat, Result, WrapErr, eyre};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum InvocationType {
@@ -132,7 +132,7 @@ impl Rpy {
             | InvocationType::Command(_) => env::current_dir().wrap_err("Unable to get cwd")?,
             InvocationType::File(filename) => {
                 let script_path = fs::canonicalize(Path::new(&filename))
-                    .wrap_err("unable to resolve project root")?;
+                    .wrap_err(format!("Failed to canonicalize \"{filename}\""))?;
                 if !script_path.is_file() {
                     return Err(eyre!(
                         "Unable to open input file: {}",
